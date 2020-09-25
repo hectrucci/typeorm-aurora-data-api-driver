@@ -1,4 +1,5 @@
 import { QueryTransformer } from './query-transformer'
+import {validate} from 'uuid';
 
 export class PostgresQueryTransformer extends QueryTransformer {
   protected transformQuery(query: string) {
@@ -33,10 +34,20 @@ export class PostgresQueryTransformer extends QueryTransformer {
       return parameters
     }
 
-    return [parameters.reduce(
-      (params, parameter, index) => {
-        params[`param_${index + 1}`] = parameter
-        return params
-      }, {})]
+    return parameters.map(
+      (parameter, index) => {
+        const paramName = `param_${index + 1}`;
+
+        
+        if (validate(parameter)) {
+          return {
+            name: paramName,
+            value: parameter,
+            cast: 'uuid',
+          };
+        }
+        
+        return {[paramName]: parameter};
+      })
   }
 }

@@ -27,6 +27,7 @@ class DataApiDriver {
       secretArn,
       resourceArn,
       database,
+      engine: serviceConfigOptions.engine,
       options: this.serviceConfigOptions,
       formatOptions,
     })
