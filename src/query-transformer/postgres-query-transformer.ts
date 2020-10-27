@@ -38,10 +38,18 @@ export class PostgresQueryTransformer extends QueryTransformer {
       const paramName = `param_${index + 1}`;
 
       if (Array.isArray(parameter)) {
+        const arrayValue: { stringValues?: Array<string> } = {};
+        switch (typeof parameter[0]) {
+          case "string": {
+            arrayValue.stringValues = parameter;
+          }
+          default: {
+            throw new Error(`Array parameter type "${typeof parameter[0]}" not supported`);
+          }
+        }
         return {
           name: paramName,
-          value: parameter,
-          cast: "array",
+          value: { arrayValue },
         };
       } else if (validate(parameter)) {
         return {
