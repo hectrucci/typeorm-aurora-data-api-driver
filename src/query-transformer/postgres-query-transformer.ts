@@ -37,7 +37,13 @@ export class PostgresQueryTransformer extends QueryTransformer {
     return parameters.map((parameter, index) => {
       const paramName = `param_${index + 1}`;
 
-      if (validate(parameter)) {
+      if (Array.isArray(parameter)) {
+        return {
+          name: paramName,
+          value: parameter,
+          cast: "array",
+        };
+      } else if (validate(parameter)) {
         return {
           name: paramName,
           value: parameter,
