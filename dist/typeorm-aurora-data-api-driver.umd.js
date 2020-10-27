@@ -1151,13 +1151,13 @@
         }
         PostgresQueryTransformer.prototype.transformQuery = function (query) {
             var quoteCharacters = ["'", '"'];
-            var newQueryString = '';
+            var newQueryString = "";
             var currentQuote = null;
             for (var i = 0; i < query.length; i += 1) {
                 var currentCharacter = query[i];
-                var currentCharacterEscaped = i !== 0 && query[i - 1] === '\\';
-                if (currentCharacter === '$' && !currentQuote) {
-                    newQueryString += ':param_';
+                var currentCharacterEscaped = i !== 0 && query[i - 1] === "\\";
+                if (currentCharacter === "$" && !currentQuote) {
+                    newQueryString += ":param_";
                 }
                 else {
                     newQueryString += currentCharacter;
@@ -1180,11 +1180,26 @@
             return parameters.map(function (parameter, index) {
                 var _a;
                 var paramName = "param_" + (index + 1);
-                if (validate(parameter)) {
+                if (Array.isArray(parameter)) {
+                    var arrayValue = {};
+                    switch (typeof parameter[0]) {
+                        case "string": {
+                            arrayValue.stringValues = parameter;
+                        }
+                        default: {
+                            throw new Error("Array parameter type \"" + typeof parameter[0] + "\" not supported");
+                        }
+                    }
+                    return {
+                        name: paramName,
+                        value: { arrayValue: arrayValue },
+                    };
+                }
+                else if (validate(parameter)) {
                     return {
                         name: paramName,
                         value: parameter,
-                        cast: 'uuid',
+                        cast: "uuid",
                     };
                 }
                 return _a = {}, _a[paramName] = parameter, _a;
