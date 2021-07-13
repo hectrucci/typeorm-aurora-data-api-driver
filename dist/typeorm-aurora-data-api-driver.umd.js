@@ -1,32 +1,31 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('aws-sdk'), require('crypto')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'aws-sdk', 'crypto'], factory) :
-    (factory((global.typeormAuroraDataApiDriver = {}),global.awsSdk,global.crypto));
-}(this, (function (exports,awsSdk,crypto) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('aws-sdk')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'aws-sdk'], factory) :
+    (factory((global.typeormAuroraDataApiDriver = {}),global.awsSdk));
+}(this, (function (exports,awsSdk) { 'use strict';
 
     awsSdk = awsSdk && awsSdk.hasOwnProperty('default') ? awsSdk['default'] : awsSdk;
-    crypto = crypto && crypto.hasOwnProperty('default') ? crypto['default'] : crypto;
 
     /*! *****************************************************************************
-    Copyright (c) Microsoft Corporation. All rights reserved.
-    Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-    this file except in compliance with the License. You may obtain a copy of the
-    License at http://www.apache.org/licenses/LICENSE-2.0
+    Copyright (c) Microsoft Corporation.
 
-    THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-    WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-    MERCHANTABLITY OR NON-INFRINGEMENT.
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
 
-    See the Apache Version 2.0 License for specific language governing permissions
-    and limitations under the License.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
     /* global Reflect, Promise */
 
     var extendStatics = function(d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
 
@@ -36,11 +35,23 @@
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     }
 
+    var __assign = function() {
+        __assign = Object.assign || function __assign(t) {
+            for (var s, i = 1, n = arguments.length; i < n; i++) {
+                s = arguments[i];
+                for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            }
+            return t;
+        };
+        return __assign.apply(this, arguments);
+    };
+
     function __awaiter(thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
             function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
             function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     }
@@ -327,7 +338,7 @@
      * https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html
      *
      * @author Jeremy Daly <jeremy@jeremydaly.com>
-     * @version 1.1.0
+     * @version 1.2.0
      * @license MIT
      */
 
@@ -340,14 +351,14 @@
 
     // Supported value types in the Data API
     const supportedTypes = [
-      "arrayValue",
-      "blobValue",
-      "booleanValue",
-      "doubleValue",
-      "isNull",
-      "longValue",
-      "stringValue",
-      "structValue",
+      'arrayValue',
+      'blobValue',
+      'booleanValue',
+      'doubleValue',
+      'isNull',
+      'longValue',
+      'stringValue',
+      'structValue'
     ];
 
     /********************************************************************/
@@ -355,247 +366,189 @@
     /********************************************************************/
 
     // Simple error function
-    const error = (...err) => {
-      throw Error(...err);
-    };
+    const error = (...err) => { throw Error(...err) };
 
     // Parse SQL statement from provided arguments
-    const parseSQL = (args) =>
-      typeof args[0] === "string"
-        ? args[0]
-        : typeof args[0] === "object" && typeof args[0].sql === "string"
-        ? args[0].sql
-        : error("No 'sql' statement provided.");
+    const parseSQL = args =>
+      typeof args[0] === 'string' ? args[0]
+      : typeof args[0] === 'object' && typeof args[0].sql === 'string' ? args[0].sql
+      : error('No \'sql\' statement provided.');
 
     // Parse the parameters from provided arguments
-    const parseParams = (args) =>
-      Array.isArray(args[0].parameters)
-        ? args[0].parameters
-        : typeof args[0].parameters === "object"
-        ? [args[0].parameters]
-        : Array.isArray(args[1])
-        ? args[1]
-        : typeof args[1] === "object"
-        ? [args[1]]
-        : args[0].parameters
-        ? error("'parameters' must be an object or array")
-        : args[1]
-        ? error("Parameters must be an object or array")
-        : [];
+    const parseParams = args =>
+      Array.isArray(args[0].parameters) ? args[0].parameters
+      : typeof args[0].parameters === 'object' ? [args[0].parameters]
+      : Array.isArray(args[1]) ? args[1]
+      : typeof args[1] === 'object' ? [args[1]]
+      : args[0].parameters ? error('\'parameters\' must be an object or array')
+      : args[1] ? error('Parameters must be an object or array')
+      : [];
 
     // Parse the supplied database, or default to config
-    const parseDatabase = (config, args) =>
-      config.transactionId
-        ? config.database
-        : typeof args[0].database === "string"
-        ? args[0].database
-        : args[0].database
-        ? error("'database' must be a string.")
-        : config.database
-        ? config.database
-        : undefined; // removed for #47 - error('No \'database\' provided.')
+    const parseDatabase = (config,args) =>
+      config.transactionId ? config.database
+      : typeof args[0].database === 'string' ? args[0].database
+      : args[0].database ? error('\'database\' must be a string.')
+      : config.database ? config.database
+      : undefined; // removed for #47 - error('No \'database\' provided.')
 
     // Parse the supplied hydrateColumnNames command, or default to config
-    const parseHydrate = (config, args) =>
-      typeof args[0].hydrateColumnNames === "boolean"
-        ? args[0].hydrateColumnNames
-        : args[0].hydrateColumnNames
-        ? error("'hydrateColumnNames' must be a boolean.")
-        : config.hydrateColumnNames;
+    const parseHydrate = (config,args) =>
+      typeof args[0].hydrateColumnNames === 'boolean' ? args[0].hydrateColumnNames
+      : args[0].hydrateColumnNames ? error('\'hydrateColumnNames\' must be a boolean.')
+      : config.hydrateColumnNames;
 
     // Parse the supplied format options, or default to config
-    const parseFormatOptions = (config, args) =>
-      typeof args[0].formatOptions === "object"
-        ? {
-            deserializeDate:
-              typeof args[0].formatOptions.deserializeDate === "boolean"
-                ? args[0].formatOptions.deserializeDate
-                : args[0].formatOptions.deserializeDate
-                ? error("'formatOptions.deserializeDate' must be a boolean.")
-                : config.formatOptions.deserializeDate,
-            treatAsLocalDate:
-              typeof args[0].formatOptions.treatAsLocalDate == "boolean"
-                ? args[0].formatOptions.treatAsLocalDate
-                : args[0].formatOptions.treatAsLocalDate
-                ? error("'formatOptions.treatAsLocalDate' must be a boolean.")
-                : config.formatOptions.treatAsLocalDate,
-          }
-        : args[0].formatOptions
-        ? error("'formatOptions' must be an object.")
-        : config.formatOptions;
+    const parseFormatOptions = (config,args) =>
+      typeof args[0].formatOptions === 'object' ? {
+        deserializeDate: typeof args[0].formatOptions.deserializeDate === 'boolean' ? args[0].formatOptions.deserializeDate
+        : args[0].formatOptions.deserializeDate ? error('\'formatOptions.deserializeDate\' must be a boolean.')
+        : config.formatOptions.deserializeDate,
+        treatAsLocalDate: typeof args[0].formatOptions.treatAsLocalDate == 'boolean' ? args[0].formatOptions.treatAsLocalDate
+        : args[0].formatOptions.treatAsLocalDate ? error('\'formatOptions.treatAsLocalDate\' must be a boolean.')
+        : config.formatOptions.treatAsLocalDate
+      }
+      : args[0].formatOptions ? error('\'formatOptions\' must be an object.')
+      : config.formatOptions;
 
     // Prepare method params w/ supplied inputs if an object is passed
-    const prepareParams = ({ secretArn, resourceArn }, args) => {
+    const prepareParams = ({ secretArn,resourceArn },args) => {
       return Object.assign(
-        { secretArn, resourceArn }, // return Arns
-        typeof args[0] === "object"
-          ? omit(args[0], ["hydrateColumnNames", "parameters"])
-          : {} // merge any inputs
-      );
+        { secretArn,resourceArn }, // return Arns
+        typeof args[0] === 'object' ?
+          omit(args[0],['hydrateColumnNames','parameters']) : {} // merge any inputs
+      )
     };
 
     // Utility function for removing certain keys from an object
-    const omit = (obj, values) =>
-      Object.keys(obj).reduce(
-        (acc, x) =>
-          values.includes(x) ? acc : Object.assign(acc, { [x]: obj[x] }),
-        {}
-      );
+    const omit = (obj,values) => Object.keys(obj).reduce((acc,x) =>
+      values.includes(x) ? acc : Object.assign(acc,{ [x]: obj[x] })
+    ,{});
 
     // Utility function for picking certain keys from an object
-    const pick = (obj, values) =>
-      Object.keys(obj).reduce(
-        (acc, x) =>
-          values.includes(x) ? Object.assign(acc, { [x]: obj[x] }) : acc,
-        {}
-      );
+    const pick = (obj,values) => Object.keys(obj).reduce((acc,x) =>
+      values.includes(x) ? Object.assign(acc,{ [x]: obj[x] }) : acc
+    ,{});
 
     // Utility function for flattening arrays
-    const flatten = (arr) => arr.reduce((acc, x) => acc.concat(x), []);
+    const flatten = arr => arr.reduce((acc,x) => acc.concat(x),[]);
 
     // Normize parameters so that they are all in standard format
-    const normalizeParams = (params) =>
-      params.reduce(
-        (acc, p) =>
-          Array.isArray(p)
-            ? acc.concat([normalizeParams(p)])
-            : (Object.keys(p).length === 2 && p.name && p.value) ||
-              (Object.keys(p).length === 3 && p.name && p.value && p.cast)
-            ? acc.concat(p)
-            : acc.concat(splitParams(p)),
-        []
-      ); // end reduce
+    const normalizeParams = params => params.reduce((acc, p) =>
+      Array.isArray(p) ? acc.concat([normalizeParams(p)])
+      : (
+        (Object.keys(p).length === 2 && p.name && p.value !== 'undefined') ||
+        (Object.keys(p).length === 3 && p.name && p.value !== 'undefined' && p.cast)
+      ) ? acc.concat(p)
+        : acc.concat(splitParams(p))
+    , []); // end reduce
 
     // Prepare parameters
-    const processParams = (
-      engine,
-      sql,
-      sqlParams,
-      params,
-      formatOptions,
-      row = 0
-    ) => {
+    const processParams = (engine,sql,sqlParams,params,formatOptions,row=0) => {
       return {
-        processedParams: params.reduce((acc, p) => {
+        processedParams: params.reduce((acc,p) => {
           if (Array.isArray(p)) {
-            const result = processParams(sql, sqlParams, p, formatOptions, row);
-            if (row === 0) {
-              sql = result.escapedSql;
-              row++;
-            }
-            return acc.concat([result.processedParams]);
+            const result = processParams(engine,sql,sqlParams,p,formatOptions,row);
+            if (row === 0) { sql = result.escapedSql; row++; }
+            return acc.concat([result.processedParams])
           } else if (sqlParams[p.name]) {
-            if (sqlParams[p.name].type === "n_ph") {
+            if (sqlParams[p.name].type === 'n_ph') {
               if (p.cast) {
-                const regex = new RegExp(":" + p.name + "\\b", "g");
+                const regex = new RegExp(':' + p.name + '\\b', 'g');
                 sql = sql.replace(
                   regex,
-                  engine === "pg"
+                  engine === 'pg'
                     ? `:${p.name}::${p.cast}`
                     : `CAST(:${p.name} AS ${p.cast})`
                 );
               }
-              acc.push(formatParam(p.name, p.value, formatOptions));
+              acc.push(formatParam(p.name,p.value,formatOptions));
             } else if (row === 0) {
-              const regex = new RegExp("::" + p.name + "\\b", "g");
+              const regex = new RegExp('::' + p.name + '\\b', 'g');
               sql = sql.replace(regex, sqlstring.escapeId(p.value));
             }
-            return acc;
+            return acc
           } else {
-            return acc;
+            return acc
           }
-        }, []),
-        escapedSql: sql,
-      };
+        },[]),
+        escapedSql: sql
+      }
     };
 
     // Converts parameter to the name/value format
-    const formatParam = (n, v, formatOptions) =>
-      formatType(n, v, getType(v), getTypeHint(v), formatOptions);
+    const formatParam = (n,v,formatOptions) => formatType(n,v,getType(v),getTypeHint(v),formatOptions);
 
     // Converts object params into name/value format
-    const splitParams = (p) =>
-      Object.keys(p).reduce((arr, x) => arr.concat({ name: x, value: p[x] }), []);
+    const splitParams = p => Object.keys(p).reduce((arr,x) =>
+      arr.concat({ name: x, value: p[x] }),[]);
 
     // Get all the sql parameters and assign them types
-    const getSqlParams = (sql) => {
+    const getSqlParams = sql => {
       // TODO: probably need to remove comments from the sql
       // TODO: placeholders?
       // sql.match(/\:{1,2}\w+|\?+/g).map((p,i) => {
-      return (sql.match(/:{1,2}\w+/g) || [])
-        .map((p) => {
-          // TODO: future support for placeholder parsing?
-          // return p === '??' ? { type: 'id' } // identifier
-          //   : p === '?' ? { type: 'ph', label: '__d'+i  } // placeholder
-          return p.startsWith("::")
-            ? { type: "n_id", label: p.substr(2) } // named id
-            : { type: "n_ph", label: p.substr(1) }; // named placeholder
-        })
-        .reduce((acc, x) => {
-          return Object.assign(acc, {
+      return (sql.match(/:{1,2}\w+/g) || []).map((p) => {
+        // TODO: future support for placeholder parsing?
+        // return p === '??' ? { type: 'id' } // identifier
+        //   : p === '?' ? { type: 'ph', label: '__d'+i  } // placeholder
+        return p.startsWith('::') ? { type: 'n_id', label: p.substr(2) } // named id
+          : { type: 'n_ph', label: p.substr(1) } // named placeholder
+      }).reduce((acc,x) => {
+        return Object.assign(acc,
+          {
             [x.label]: {
-              type: x.type,
-            },
-          });
-        }, {}); // end reduce
+              type: x.type
+            }
+          }
+        )
+      },{}) // end reduce
     };
 
     // Gets the value type and returns the correct value field name
     // TODO: Support more types as the are released
-    const getType = (val) =>
-      typeof val === "string"
-        ? "stringValue"
-        : typeof val === "boolean"
-        ? "booleanValue"
-        : typeof val === "number" && parseInt(val) === val
-        ? "longValue"
-        : typeof val === "number" && parseFloat(val) === val
-        ? "doubleValue"
-        : val === null
-        ? "isNull"
-        : isDate(val)
-        ? "stringValue"
-        : Buffer.isBuffer(val)
-        ? "blobValue"
-        : // : Array.isArray(val) ? 'arrayValue' This doesn't work yet
-        // TODO: there is a 'structValue' now for postgres
-        typeof val === "object" &&
-          Object.keys(val).length === 1 &&
-          supportedTypes.includes(Object.keys(val)[0])
-        ? null
-        : undefined;
+    const getType = val =>
+      typeof val === 'string' ? 'stringValue'
+      : typeof val === 'boolean' ? 'booleanValue'
+      : typeof val === 'number' && parseInt(val) === val ? 'longValue'
+      : typeof val === 'number' && parseFloat(val) === val ? 'doubleValue'
+      : val === null ? 'isNull'
+      : isDate(val) ? 'stringValue'
+      : Buffer.isBuffer(val) ? 'blobValue'
+      // : Array.isArray(val) ? 'arrayValue' This doesn't work yet
+      // TODO: there is a 'structValue' now for postgres
+      : typeof val === 'object'
+        && Object.keys(val).length === 1
+        && supportedTypes.includes(Object.keys(val)[0]) ? null
+      : undefined;
 
     // Hint to specify the underlying object type for data type mapping
-    const getTypeHint = (val) => (isDate(val) ? "TIMESTAMP" : undefined);
+    const getTypeHint = val =>
+      isDate(val) ? 'TIMESTAMP' : undefined;
 
-    const isDate = (val) => val instanceof Date;
+    const isDate = val =>
+      val instanceof Date;
 
     // Creates a standard Data API parameter using the supplied inputs
-    const formatType = (name, value, type, typeHint, formatOptions) => {
+    const formatType = (name,value,type,typeHint,formatOptions) => {
       return Object.assign(
         typeHint != null ? { name, typeHint } : { name },
-        type === null
-          ? { value }
-          : {
-              value: {
-                [type ? type : error(`'${name}' is an invalid type`)]:
-                  type === "isNull"
-                    ? true
-                    : isDate(value)
-                    ? formatToTimeStamp(
-                        value,
-                        formatOptions && formatOptions.treatAsLocalDate
-                      )
-                    : value,
-              },
-            }
-      );
+        type === null ? { value }
+        : {
+          value: {
+            [type ? type : error(`'${name}' is an invalid type`)]
+            : type === 'isNull' ? true
+            : isDate(value) ? formatToTimeStamp(value, formatOptions && formatOptions.treatAsLocalDate)
+            : value
+          }
+        }
+      )
     }; // end formatType
 
     // Formats the (UTC) date to the AWS accepted YYYY-MM-DD HH:MM:SS[.FFF] format
     // See https://docs.aws.amazon.com/rdsdataservice/latest/APIReference/API_SqlParameter.html
     const formatToTimeStamp = (date, treatAsLocalDate) => {
-      const pad = (val, num = 2) => "0".repeat(num - (val + "").length) + val;
+      const pad = (val,num=2) => '0'.repeat(num-(val + '').length) + val;
 
       const year = treatAsLocalDate ? date.getFullYear() : date.getUTCFullYear();
       const month = (treatAsLocalDate ? date.getMonth() : date.getUTCMonth()) + 1; // Convert to human month
@@ -604,157 +557,119 @@
       const hours = treatAsLocalDate ? date.getHours() : date.getUTCHours();
       const minutes = treatAsLocalDate ? date.getMinutes() : date.getUTCMinutes();
       const seconds = treatAsLocalDate ? date.getSeconds() : date.getUTCSeconds();
-      const ms = treatAsLocalDate
-        ? date.getMilliseconds()
-        : date.getUTCMilliseconds();
+      const ms = treatAsLocalDate ? date.getMilliseconds() : date.getUTCMilliseconds();
 
-      const fraction = ms <= 0 ? "" : `.${pad(ms, 3)}`;
+      const fraction = ms <= 0 ? '' : `.${pad(ms,3)}`;
 
-      return `${year}-${pad(month)}-${pad(day)} ${pad(hours)}:${pad(minutes)}:${pad(
-    seconds
-  )}${fraction}`;
+      return `${year}-${pad(month)}-${pad(day)} ${pad(hours)}:${pad(minutes)}:${pad(seconds)}${fraction}`
     };
 
     // Converts the string value to a Date object.
     // If standard TIMESTAMP format (YYYY-MM-DD[ HH:MM:SS[.FFF]]) without TZ + treatAsLocalDate=false then assume UTC Date
     // In all other cases convert value to datetime as-is (also values with TZ info)
-    const formatFromTimeStamp = (value, treatAsLocalDate) =>
-      !treatAsLocalDate &&
-      /^\d{4}-\d{2}-\d{2}(\s\d{2}:\d{2}:\d{2}(\.\d{3})?)?$/.test(value)
-        ? new Date(value + "Z")
-        : new Date(value);
+    const formatFromTimeStamp = (value,treatAsLocalDate) =>
+      !treatAsLocalDate && /^\d{4}-\d{2}-\d{2}(\s\d{2}:\d{2}:\d{2}(\.\d{3})?)?$/.test(value) ?
+        new Date(value + 'Z') :
+        new Date(value);
 
     // Formats the results of a query response
     const formatResults = (
-      {
-        // destructure results
+      { // destructure results
         columnMetadata, // ONLY when hydrate or includeResultMetadata is true
         numberOfRecordsUpdated, // ONLY for executeStatement method
         records, // ONLY for executeStatement method
         generatedFields, // ONLY for INSERTS
-        updateResults, // ONLY on batchExecuteStatement
+        updateResults // ONLY on batchExecuteStatement
       },
       hydrate,
       includeMeta,
       formatOptions
-    ) =>
-      Object.assign(
-        includeMeta ? { columnMetadata } : {},
-        numberOfRecordsUpdated !== undefined && !records
-          ? { numberOfRecordsUpdated }
-          : {},
-        records
-          ? {
-              records: formatRecords(
-                records,
-                columnMetadata,
-                hydrate,
-                formatOptions
-              ),
-            }
-          : {},
-        updateResults ? { updateResults: formatUpdateResults(updateResults) } : {},
-        generatedFields && generatedFields.length > 0
-          ? { insertId: generatedFields[0].longValue }
-          : {}
-      );
+    ) => Object.assign(
+      includeMeta ? { columnMetadata } : {},
+      numberOfRecordsUpdated !== undefined && !records ? { numberOfRecordsUpdated } : {},
+      records ? {
+        records: formatRecords(records, columnMetadata, hydrate, formatOptions)
+      } : {},
+      updateResults ? { updateResults: formatUpdateResults(updateResults) } : {},
+      generatedFields && generatedFields.length > 0 ?
+        { insertId: generatedFields[0].longValue } : {}
+    );
 
     // Processes records and either extracts Typed Values into an array, or
     // object with named column labels
-    const formatRecords = (recs, columns, hydrate, formatOptions) => {
+    const formatRecords = (recs,columns,hydrate,formatOptions) => {
+
       // Create map for efficient value parsing
-      let fmap =
-        recs && recs[0]
-          ? recs[0].map((x, i) => {
-              return Object.assign(
-                {},
-                columns
-                  ? { label: columns[i].label, typeName: columns[i].typeName }
-                  : {}
-              ); // add column label and typeName
-            })
-          : {};
+      let fmap = recs && recs[0] ? recs[0].map((x,i) => {
+        return Object.assign({},
+          columns ? { label: columns[i].label, typeName: columns[i].typeName } : {} ) // add column label and typeName
+      }) : {};
 
       // Map over all the records (rows)
-      return recs
-        ? recs.map((rec) => {
-            // Reduce each field in the record (row)
-            return rec.reduce(
-              (acc, field, i) => {
-                // If the field is null, always return null
-                if (field.isNull === true) {
-                  return hydrate // object if hydrate, else array
-                    ? Object.assign(acc, { [fmap[i].label]: null })
-                    : acc.concat(null);
+      return recs ? recs.map(rec => {
 
-                  // If the field is mapped, return the mapped field
-                } else if (fmap[i] && fmap[i].field) {
-                  const value = formatRecordValue(
-                    field[fmap[i].field],
-                    fmap[i].typeName,
-                    formatOptions
-                  );
-                  return hydrate // object if hydrate, else array
-                    ? Object.assign(acc, { [fmap[i].label]: value })
-                    : acc.concat(value);
+        // Reduce each field in the record (row)
+        return rec.reduce((acc,field,i) => {
 
-                  // Else discover the field type
-                } else {
-                  // Look for non-null fields
-                  Object.keys(field).map((type) => {
-                    if (type !== "isNull" && field[type] !== null) {
-                      fmap[i]["field"] = type;
-                    }
-                  });
+          // If the field is null, always return null
+          if (field.isNull === true) {
+            return hydrate ? // object if hydrate, else array
+              Object.assign(acc,{ [fmap[i].label]: null })
+              : acc.concat(null)
 
-                  // Return the mapped field (this should NEVER be null)
-                  const value = formatRecordValue(
-                    field[fmap[i].field],
-                    fmap[i].typeName,
-                    formatOptions
-                  );
-                  return hydrate // object if hydrate, else array
-                    ? Object.assign(acc, { [fmap[i].label]: value })
-                    : acc.concat(value);
-                }
-              },
-              hydrate ? {} : []
-            ); // init object if hydrate, else init array
-          })
-        : []; // empty record set returns an array
+          // If the field is mapped, return the mapped field
+          } else if (fmap[i] && fmap[i].field) {
+            const value = formatRecordValue(field[fmap[i].field],fmap[i].typeName,formatOptions);
+            return hydrate ? // object if hydrate, else array
+              Object.assign(acc,{ [fmap[i].label]: value })
+              : acc.concat(value)
+
+          // Else discover the field type
+          } else {
+
+            // Look for non-null fields
+            Object.keys(field).map(type => {
+              if (type !== 'isNull' && field[type] !== null) {
+                fmap[i]['field'] = type;
+              }
+            });
+
+            // Return the mapped field (this should NEVER be null)
+            const value = formatRecordValue(field[fmap[i].field],fmap[i].typeName,formatOptions);
+            return hydrate ? // object if hydrate, else array
+              Object.assign(acc,{ [fmap[i].label]: value })
+              : acc.concat(value)
+          }
+
+        }, hydrate ? {} : []) // init object if hydrate, else init array
+      }) : [] // empty record set returns an array
     }; // end formatRecords
 
     // Format record value based on its value, the database column's typeName and the formatting options
-    const formatRecordValue = (value, typeName, formatOptions) =>
-      formatOptions &&
-      formatOptions.deserializeDate &&
-      ["DATE", "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE"].includes(
-        typeName
-      )
-        ? formatFromTimeStamp(
-            value,
-            (formatOptions && formatOptions.treatAsLocalDate) ||
-              typeName === "TIMESTAMP WITH TIME ZONE"
-          )
-        : value;
+    const formatRecordValue = (value,typeName,formatOptions) => formatOptions && formatOptions.deserializeDate &&
+      ['DATE', 'DATETIME', 'TIMESTAMP', 'TIMESTAMP WITH TIME ZONE'].includes(typeName)
+      ? formatFromTimeStamp(value,(formatOptions && formatOptions.treatAsLocalDate) || typeName === 'TIMESTAMP WITH TIME ZONE')
+      : value;
 
     // Format updateResults and extract insertIds
-    const formatUpdateResults = (res) =>
-      res.map((x) => {
-        return x.generatedFields && x.generatedFields.length > 0
-          ? { insertId: x.generatedFields[0].longValue }
-          : {};
-      });
+    const formatUpdateResults = res => res.map(x => {
+      return x.generatedFields && x.generatedFields.length > 0 ?
+        { insertId: x.generatedFields[0].longValue } : {}
+    });
+
 
     // Merge configuration data with supplied arguments
-    const mergeConfig = (initialConfig, args) => Object.assign(initialConfig, args);
+    const mergeConfig = (initialConfig,args) =>
+      Object.assign(initialConfig,args);
+
+
 
     /********************************************************************/
     /**  QUERY MANAGEMENT                                              **/
     /********************************************************************/
 
     // Query function (use standard form for `this` context)
-    const query = async function (config, ..._args) {
+    const query = async function(config,..._args) {
       // Flatten array if nested arrays (fixes #30)
       const args = Array.isArray(_args[0]) ? flatten(_args) : _args;
 
@@ -763,51 +678,42 @@
       const sqlParams = getSqlParams(sql);
 
       // Parse hydration setting
-      const hydrateColumnNames = parseHydrate(config, args);
+      const hydrateColumnNames = parseHydrate(config,args);
 
       // Parse data format settings
-      const formatOptions = parseFormatOptions(config, args);
+      const formatOptions = parseFormatOptions(config,args);
 
       // Parse and normalize parameters
       const parameters = normalizeParams(parseParams(args));
 
       // Process parameters and escape necessary SQL
-      const { processedParams, escapedSql } = processParams(
-        config.engine,
-        sql,
-        sqlParams,
-        parameters,
-        formatOptions
-      );
+      const { processedParams,escapedSql } = processParams(config.engine,sql,sqlParams,parameters,formatOptions);
 
       // Determine if this is a batch request
-      const isBatch =
-        processedParams.length > 0 && Array.isArray(processedParams[0]);
+      const isBatch = processedParams.length > 0
+        && Array.isArray(processedParams[0]);
 
       // Create/format the parameters
       const params = Object.assign(
-        prepareParams(config, args),
+        prepareParams(config,args),
         {
-          database: parseDatabase(config, args), // add database
-          sql: escapedSql, // add escaped sql statement
+          database: parseDatabase(config,args), // add database
+          sql: escapedSql // add escaped sql statement
         },
         // Only include parameters if they exist
-        processedParams.length > 0
-          ? // Batch statements require parameterSets instead of parameters
-            { [isBatch ? "parameterSets" : "parameters"]: processedParams }
-          : {},
+        processedParams.length > 0 ?
+          // Batch statements require parameterSets instead of parameters
+          { [isBatch ? 'parameterSets' : 'parameters']: processedParams } : {},
         // Force meta data if set and not a batch
         hydrateColumnNames && !isBatch ? { includeResultMetadata: true } : {},
         // If a transactionId is passed, overwrite any manual input
         config.transactionId ? { transactionId: config.transactionId } : {}
       ); // end params
 
-      try {
-        // attempt to run the query
+      try { // attempt to run the query  
 
         // Capture the result for debugging
-        let result = await (isBatch
-          ? config.RDS.batchExecuteStatement(params).promise()
+        let result = await (isBatch ? config.RDS.batchExecuteStatement(params).promise()
           : config.RDS.executeStatement(params).promise());
 
         // Format and return the results
@@ -816,65 +722,71 @@
           hydrateColumnNames,
           args[0].includeResultMetadata === true,
           formatOptions
-        );
-      } catch (e) {
+        )
+
+      } catch(e) {
+
         if (this && this.rollback) {
           let rollback = await config.RDS.rollbackTransaction(
-            pick(params, ["resourceArn", "secretArn", "transactionId"])
+            pick(params,['resourceArn','secretArn','transactionId'])
           ).promise();
 
-          this.rollback(e, rollback);
+          this.rollback(e,rollback);
         }
         // Throw the error
-        throw e;
+        throw e
       }
+
     }; // end query
+
+
 
     /********************************************************************/
     /**  TRANSACTION MANAGEMENT                                        **/
     /********************************************************************/
 
     // Init a transaction object and return methods
-    const transaction = (config, _args) => {
-      let args = typeof _args === "object" ? [_args] : [{}];
+    const transaction = (config,_args) => {
+
+      let args = typeof _args === 'object' ? [_args] : [{}];
       let queries = []; // keep track of queries
       let rollback = () => {}; // default rollback event
 
-      const txConfig = Object.assign(prepareParams(config, args), {
-        database: parseDatabase(config, args), // add database
-        hydrateColumnNames: parseHydrate(config, args), // add hydrate
-        formatOptions: parseFormatOptions(config, args), // add formatOptions
-        RDS: config.RDS, // reference the RDSDataService instance
-      });
+      const txConfig = Object.assign(
+        prepareParams(config,args),
+        {
+          database: parseDatabase(config,args), // add database
+          hydrateColumnNames: parseHydrate(config,args), // add hydrate
+          formatOptions: parseFormatOptions(config,args), // add formatOptions
+          RDS: config.RDS // reference the RDSDataService instance
+        }
+      );
 
       return {
-        query: function (...args) {
-          if (typeof args[0] === "function") {
+        query: function(...args) {
+          if (typeof args[0] === 'function') {
             queries.push(args[0]);
           } else {
             queries.push(() => [...args]);
           }
-          return this;
+          return this
         },
-        rollback: function (fn) {
-          if (typeof fn === "function") {
-            rollback = fn;
-          }
-          return this;
+        rollback: function(fn) {
+          if (typeof fn === 'function') { rollback = fn; }
+          return this
         },
-        commit: async function () {
-          return await commit(txConfig, queries, rollback);
-        },
-      };
+        commit: async function() { return await commit(txConfig,queries,rollback) }
+      }
     };
 
     // Commit transaction by running queries
-    const commit = async (config, queries, rollback) => {
+    const commit = async (config,queries,rollback) => {
+
       let results = []; // keep track of results
 
       // Start a transaction
       const { transactionId } = await config.RDS.beginTransaction(
-        pick(config, ["resourceArn", "secretArn", "database"])
+        pick(config,['resourceArn','secretArn','database'])
       ).promise();
 
       // Add transactionId to the config
@@ -883,24 +795,21 @@
       // Loop through queries
       for (let i = 0; i < queries.length; i++) {
         // Execute the queries, pass the rollback as context
-        let result = await query.apply({ rollback }, [
-          config,
-          queries[i](results[results.length - 1], results),
-        ]);
+        let result = await query.apply({rollback},[config,queries[i](results[results.length-1],results)]);
         // Add the result to the main results accumulator
         results.push(result);
       }
 
       // Commit our transaction
       const { transactionStatus } = await txConfig.RDS.commitTransaction(
-        pick(config, ["resourceArn", "secretArn", "transactionId"])
+        pick(config,['resourceArn','secretArn','transactionId'])
       ).promise();
 
       // Add the transaction status to the results
-      results.push({ transactionStatus });
+      results.push({transactionStatus});
 
       // Return the results
-      return results;
+      return results
     };
 
     /********************************************************************/
@@ -911,7 +820,7 @@
     /**
      * Create a Data API client instance
      * @param {object} params
-     * @param {'mysql'|'pg'} params.engine The type of database (MySQL or Postgres)
+     * @param {'mysql'|'pg'} [params.engine=mysql] The type of database (MySQL or Postgres)
      * @param {string} params.resourceArn The ARN of your Aurora Serverless Cluster
      * @param {string} params.secretArn The ARN of the secret associated with your
      *   database credentials
@@ -928,17 +837,15 @@
      * @param {string} [params.region] DEPRECATED
      *
      */
-    const init = (params) => {
+    const init = params => {
+
       // Set the options for the RDSDataService
-      const options =
-        typeof params.options === "object"
-          ? params.options
-          : params.options !== undefined
-          ? error("'options' must be an object")
-          : {};
+      const options = typeof params.options === 'object' ? params.options
+        : params.options !== undefined ? error('\'options\' must be an object')
+        : {};
 
       // Update the AWS http agent with the region
-      if (typeof params.region === "string") {
+      if (typeof params.region === 'string') {
         options.region = params.region;
       }
 
@@ -950,30 +857,25 @@
       // Set the configuration for this instance
       const config = {
         // Require engine
-        engine:
-          typeof params.engine === "string"
-            ? params.engine
-            : error("'engine' string value required"),
+        engine: typeof params.engine === 'string' ?
+          params.engine
+          : 'mysql',
 
         // Require secretArn
-        secretArn:
-          typeof params.secretArn === "string"
-            ? params.secretArn
-            : error("'secretArn' string value required"),
+        secretArn: typeof params.secretArn === 'string' ?
+          params.secretArn
+          : error('\'secretArn\' string value required'),
 
         // Require resourceArn
-        resourceArn:
-          typeof params.resourceArn === "string"
-            ? params.resourceArn
-            : error("'resourceArn' string value required"),
+        resourceArn: typeof params.resourceArn === 'string' ?
+          params.resourceArn
+          : error('\'resourceArn\' string value required'),
 
         // Load optional database
-        database:
-          typeof params.database === "string"
-            ? params.database
-            : params.database !== undefined
-            ? error("'database' must be a string")
-            : undefined,
+        database: typeof params.database === 'string' ?
+          params.database
+          : params.database !== undefined ? error('\'database\' must be a string')
+          : undefined,
 
         // Load optional schema DISABLED for now since this isn't used with MySQL
         // schema: typeof params.schema === 'string' ? params.schema
@@ -982,68 +884,109 @@
 
         // Set hydrateColumnNames (default to true)
         hydrateColumnNames:
-          typeof params.hydrateColumnNames === "boolean"
-            ? params.hydrateColumnNames
-            : true,
+          typeof params.hydrateColumnNames === 'boolean' ?
+            params.hydrateColumnNames : true,
 
         // Value formatting options. For date the deserialization is enabled and (re)stored as UTC
         formatOptions: {
           deserializeDate:
-            typeof params.formatOptions === "object" &&
-            params.formatOptions.deserializeDate === false
-              ? false
-              : true,
+            typeof params.formatOptions === 'object' && params.formatOptions.deserializeDate === false ? false : true,
           treatAsLocalDate:
-            typeof params.formatOptions === "object" &&
-            params.formatOptions.treatAsLocalDate,
+            typeof params.formatOptions === 'object' && params.formatOptions.treatAsLocalDate
         },
 
         // TODO: Put this in a separate module for testing?
         // Create an instance of RDSDataService
-        RDS: new awsSdk.RDSDataService(options),
+        RDS: new awsSdk.RDSDataService(options)
+
       }; // end config
 
       // Return public methods
       return {
         // Query method, pass config and parameters
-        query: (...x) => query(config, ...x),
+        query: (...x) => query(config,...x),
         // Transaction method, pass config and parameters
-        transaction: (x) => transaction(config, x),
+        transaction: (x) => transaction(config,x),
 
         // Export promisified versions of the RDSDataService methods
         batchExecuteStatement: (args) =>
           config.RDS.batchExecuteStatement(
-            mergeConfig(
-              pick(config, ["resourceArn", "secretArn", "database"]),
-              args
-            )
+            mergeConfig(pick(config,['resourceArn','secretArn','database']),args)
           ).promise(),
         beginTransaction: (args) =>
           config.RDS.beginTransaction(
-            mergeConfig(
-              pick(config, ["resourceArn", "secretArn", "database"]),
-              args
-            )
+            mergeConfig(pick(config,['resourceArn','secretArn','database']),args)
           ).promise(),
         commitTransaction: (args) =>
           config.RDS.commitTransaction(
-            mergeConfig(pick(config, ["resourceArn", "secretArn"]), args)
+            mergeConfig(pick(config,['resourceArn','secretArn']),args)
           ).promise(),
         executeStatement: (args) =>
           config.RDS.executeStatement(
-            mergeConfig(
-              pick(config, ["resourceArn", "secretArn", "database"]),
-              args
-            )
+            mergeConfig(pick(config,['resourceArn','secretArn','database']),args)
           ).promise(),
         rollbackTransaction: (args) =>
           config.RDS.rollbackTransaction(
-            mergeConfig(pick(config, ["resourceArn", "secretArn"]), args)
-          ).promise(),
-      };
+            mergeConfig(pick(config,['resourceArn','secretArn']),args)
+          ).promise()
+      }
+
     }; // end exports
 
     var dataApiClient = init;
+
+    var pad = function (val, num) {
+        if (num === void 0) { num = 2; }
+        return '0'.repeat(num - (val.toString()).length) + val;
+    };
+    var dateToDateTimeString = function (date) {
+        var year = date.getUTCFullYear();
+        var month = date.getUTCMonth() + 1; // Convert to human month
+        var day = date.getUTCDate();
+        var hours = date.getUTCHours();
+        var minutes = date.getUTCMinutes();
+        var seconds = date.getUTCSeconds();
+        var ms = date.getUTCMilliseconds();
+        var fraction = ms <= 0 ? '' : "." + pad(ms, 3);
+        return year + "-" + pad(month) + "-" + pad(day) + " " + pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) + fraction;
+    };
+    var dateToDateString = function (date) {
+        if (typeof date === 'string') {
+            return date;
+        }
+        var year = date.getUTCFullYear();
+        var month = date.getUTCMonth() + 1; // Convert to human month
+        var day = date.getUTCDate();
+        return year + "-" + pad(month) + "-" + pad(day);
+    };
+    var dateToTimeString = function (date) {
+        if (typeof date === 'string') {
+            return date;
+        }
+        var hours = date.getUTCHours();
+        var minutes = date.getUTCMinutes();
+        var seconds = date.getUTCSeconds();
+        var ms = date.getUTCMilliseconds();
+        var fraction = ms <= 0 ? '' : "." + pad(ms, 3);
+        return pad(hours) + ":" + pad(minutes) + ":" + pad(seconds) + fraction;
+    };
+    var simpleArrayToString = function (value) {
+        if (Array.isArray(value)) {
+            return value
+                .map(function (i) { return String(i); })
+                .join(',');
+        }
+        return value;
+    };
+    var stringToSimpleArray = function (value) {
+        if (value instanceof String || typeof value === 'string') {
+            if (value.length > 0) {
+                return value.split(',');
+            }
+            return [];
+        }
+        return value;
+    };
 
     var QueryTransformer = /** @class */ (function () {
         function QueryTransformer() {
@@ -1065,6 +1008,91 @@
         function MysqlQueryTransformer() {
             return _super !== null && _super.apply(this, arguments) || this;
         }
+        MysqlQueryTransformer.prototype.preparePersistentValue = function (value, metadata) {
+            if (!value) {
+                return value;
+            }
+            switch (metadata.type) {
+                case 'date':
+                    return {
+                        value: dateToDateString(value),
+                        cast: 'DATE',
+                    };
+                case 'time':
+                    return {
+                        value: dateToTimeString(value),
+                        cast: 'TIME',
+                    };
+                case 'timestamp':
+                case 'datetime':
+                case Date:
+                    return {
+                        value: dateToDateTimeString(value),
+                        cast: 'DATETIME',
+                    };
+                case 'decimal':
+                case 'numeric':
+                    return {
+                        value: '' + value,
+                        cast: 'DECIMAL',
+                    };
+                case 'set':
+                case 'simple-array':
+                    return {
+                        value: simpleArrayToString(value),
+                    };
+                case 'json':
+                case 'simple-json':
+                    return {
+                        value: JSON.stringify(value),
+                    };
+                case 'enum':
+                case 'simple-enum':
+                    return {
+                        value: '' + value,
+                        cast: metadata.enumName || metadata.entityMetadata.tableName + "_" + metadata.databaseName.toLowerCase() + "_enum",
+                    };
+                default:
+                    return {
+                        value: value,
+                    };
+            }
+        };
+        MysqlQueryTransformer.prototype.prepareHydratedValue = function (value, metadata) {
+            if (value === null || value === undefined) {
+                return value;
+            }
+            switch (metadata.type) {
+                case Boolean:
+                    return !!value;
+                case 'datetime':
+                case Date:
+                case 'timestamp':
+                case 'timestamp with time zone':
+                case 'timestamp without time zone':
+                    return typeof value === 'string' ? new Date(value + ' GMT+0') : value;
+                case 'date':
+                    return dateToDateString(value);
+                case 'year':
+                    return typeof value === 'string' ? new Date(value).getUTCFullYear() : value.getUTCFullYear();
+                case 'time':
+                    return value;
+                case 'set':
+                case 'simple-array':
+                    return typeof value === 'string' ? stringToSimpleArray(value) : value;
+                case 'json':
+                case 'simple-json':
+                    return typeof value === 'string' ? JSON.parse(value) : value;
+                case 'enum':
+                case 'simple-enum':
+                    if (metadata.enum && !Number.isNaN(value) && metadata.enum.indexOf(parseInt(value, 10)) >= 0) {
+                        return parseInt(value, 10);
+                    }
+                    return value;
+                default:
+                    return value;
+            }
+        };
         MysqlQueryTransformer.prototype.transformQuery = function (query, parameters) {
             var quoteCharacters = ["'", '"'];
             var newQueryString = '';
@@ -1077,9 +1105,8 @@
                 if (currentCharacter === '?' && !currentQuote) {
                     var parameter = parameters[srcIndex];
                     if (Array.isArray(parameter)) {
-                        var additionalParameters = parameter.map(function (_, index) {
-                            return ":param_" + (destIndex + index);
-                        });
+                        // eslint-disable-next-line no-loop-func
+                        var additionalParameters = parameter.map(function (_, index) { return ":param_" + (destIndex + index); });
                         newQueryString += additionalParameters.join(', ');
                         destIndex += additionalParameters.length;
                     }
@@ -1103,6 +1130,24 @@
             }
             return newQueryString;
         };
+        MysqlQueryTransformer.prototype.transformParameters = function (parameters) {
+            if (!parameters) {
+                return parameters;
+            }
+            var expandedParameters = this.expandArrayParameters(parameters);
+            return expandedParameters.map(function (parameter, index) {
+                if (parameter === undefined) {
+                    return parameter;
+                }
+                if (typeof parameter === 'object' && (parameter === null || parameter === void 0 ? void 0 : parameter.value)) {
+                    return (__assign({ name: "param_" + index }, parameter));
+                }
+                return {
+                    name: "param_" + index,
+                    value: parameter,
+                };
+            });
+        };
         MysqlQueryTransformer.prototype.expandArrayParameters = function (parameters) {
             return parameters.reduce(function (expandedParameters, parameter) {
                 if (Array.isArray(parameter)) {
@@ -1114,41 +1159,137 @@
                 return expandedParameters;
             }, []);
         };
-        MysqlQueryTransformer.prototype.transformParameters = function (parameters) {
-            if (!parameters) {
-                return parameters;
-            }
-            var expandedParameters = this.expandArrayParameters(parameters);
-            return [expandedParameters.reduce(function (params, parameter, index) {
-                    params["param_" + index] = parameter;
-                    return params;
-                }, {})];
-        };
         return MysqlQueryTransformer;
     }(QueryTransformer));
-
-    var REGEX = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-
-    function validate(uuid) {
-      return typeof uuid === 'string' && REGEX.test(uuid);
-    }
-
-    /**
-     * Convert array of 16 byte values to UUID string format of the form:
-     * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-     */
-
-    const byteToHex = [];
-
-    for (let i = 0; i < 256; ++i) {
-      byteToHex.push((i + 0x100).toString(16).substr(1));
-    }
 
     var PostgresQueryTransformer = /** @class */ (function (_super) {
         __extends(PostgresQueryTransformer, _super);
         function PostgresQueryTransformer() {
             return _super !== null && _super.apply(this, arguments) || this;
         }
+        PostgresQueryTransformer.prototype.preparePersistentValue = function (value, metadata) {
+            if (!value) {
+                return value;
+            }
+            switch (metadata.type) {
+                case 'date':
+                    return {
+                        value: dateToDateString(value),
+                        cast: 'DATE',
+                    };
+                case 'time':
+                    return {
+                        value: dateToTimeString(value),
+                        cast: 'TIME',
+                    };
+                case 'time with time zone':
+                    return {
+                        value: dateToTimeString(value),
+                        cast: 'time with time zone',
+                    };
+                case 'timetz':
+                    return {
+                        value: dateToTimeString(value),
+                        cast: 'timetz',
+                    };
+                case 'interval':
+                    return {
+                        value: value,
+                        cast: 'interval',
+                    };
+                case 'timestamp':
+                case 'datetime':
+                case 'timestamp with time zone':
+                case 'timestamptz':
+                    return {
+                        value: dateToDateTimeString(value),
+                        cast: 'TIMESTAMP',
+                    };
+                case 'decimal':
+                case 'numeric':
+                    return {
+                        value: '' + value,
+                        cast: 'DECIMAL',
+                    };
+                case 'simple-array':
+                    return {
+                        value: simpleArrayToString(value),
+                    };
+                case 'simple-json':
+                case 'json':
+                case 'jsonb':
+                    return {
+                        value: JSON.stringify(value),
+                        cast: 'JSON',
+                    };
+                case 'uuid':
+                    return {
+                        value: '' + value,
+                        cast: 'UUID',
+                    };
+                case 'simple-enum':
+                case 'enum':
+                    return {
+                        value: '' + value,
+                        cast: metadata.enumName || metadata.entityMetadata.tableName + "_" + metadata.databaseName.toLowerCase() + "_enum",
+                    };
+                default:
+                    return {
+                        value: value,
+                    };
+            }
+        };
+        PostgresQueryTransformer.prototype.prepareHydratedValue = function (value, metadata) {
+            if (value === null || value === undefined) {
+                return value;
+            }
+            switch (metadata.type) {
+                case Boolean:
+                    return !!value;
+                case 'datetime':
+                case Date:
+                case 'timestamp':
+                case 'timestamp with time zone':
+                case 'timestamp without time zone':
+                case 'timestamptz':
+                    return typeof value === 'string' ? new Date(value + ' GMT+0') : value;
+                case 'date':
+                    return value;
+                case 'time':
+                    return value;
+                case 'hstore':
+                    if (metadata.hstoreType === 'object') {
+                        var unescapeString_1 = function (str) { return str.replace(/\\./g, function (m) { return m[1]; }); };
+                        var regexp = /"([^"\\]*(?:\\.[^"\\]*)*)"=>(?:(NULL)|"([^"\\]*(?:\\.[^"\\]*)*)")(?:,|$)/g;
+                        var object_1 = {};
+                        ("" + value).replace(regexp, function (_, key, nullValue, stringValue) {
+                            object_1[unescapeString_1(key)] = nullValue ? null : unescapeString_1(stringValue);
+                            return '';
+                        });
+                        return object_1;
+                    }
+                    return value;
+                case 'simple-array':
+                    return typeof value === 'string' ? stringToSimpleArray(value) : value;
+                case 'json':
+                case 'simple-json':
+                case 'jsonb':
+                    return typeof value === 'string' ? JSON.parse(value) : value;
+                case 'enum':
+                case 'simple-enum':
+                    if (metadata.isArray) {
+                        // manually convert enum array to array of values (pg does not support, see https://github.com/brianc/node-pg-types/issues/56)
+                        value = value !== '{}' ? value.substr(1, value.length - 2)
+                            .split(',') : [];
+                        // convert to number if that exists in possible enum options
+                        return value.map(function (val) { return (!Number.isNaN(+val) && metadata.enum.indexOf(parseInt(val, 10)) >= 0 ? parseInt(val, 10) : val); });
+                    }
+                    // convert to number if that exists in poosible enum options
+                    return !Number.isNaN(+value) && metadata.enum.indexOf(parseInt(value, 10)) >= 0 ? parseInt(value, 10) : value;
+                default:
+                    return value;
+            }
+        };
         PostgresQueryTransformer.prototype.transformQuery = function (query) {
             var quoteCharacters = ["'", '"'];
             var newQueryString = "";
@@ -1178,31 +1319,24 @@
                 return parameters;
             }
             return parameters.map(function (parameter, index) {
-                var _a;
-                var paramName = "param_" + (index + 1);
-                if (Array.isArray(parameter)) {
-                    var arrayValue = {};
-                    switch (typeof parameter[0]) {
-                        case "string": {
-                            arrayValue.stringValues = parameter;
-                        }
-                        default: {
-                            throw new Error("Array parameter type \"" + typeof parameter[0] + "\" not supported");
-                        }
-                    }
+                if (parameter === undefined) {
+                    return parameter;
+                }
+                if (typeof parameter === 'object' && (parameter === null || parameter === void 0 ? void 0 : parameter.value)) {
+                    return (__assign({ name: "param_" + (index + 1) }, parameter));
+                }
+                // Hack for UUID
+                if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test('' + parameter)) {
                     return {
-                        name: paramName,
-                        value: { arrayValue: arrayValue },
+                        name: "param_" + (index + 1),
+                        value: '' + parameter,
+                        cast: 'uuid',
                     };
                 }
-                else if (validate(parameter)) {
-                    return {
-                        name: paramName,
-                        value: parameter,
-                        cast: "uuid",
-                    };
-                }
-                return _a = {}, _a[paramName] = parameter, _a;
+                return {
+                    name: "param_" + (index + 1),
+                    value: parameter,
+                };
             });
         };
         return PostgresQueryTransformer;
@@ -1255,6 +1389,12 @@
                     }
                 });
             });
+        };
+        DataApiDriver.prototype.preparePersistentValue = function (value, columnMetadata) {
+            return this.queryTransformer.preparePersistentValue(value, columnMetadata);
+        };
+        DataApiDriver.prototype.prepareHydratedValue = function (value, columnMetadata) {
+            return this.queryTransformer.prepareHydratedValue(value, columnMetadata);
         };
         DataApiDriver.prototype.startTransaction = function () {
             return __awaiter(this, void 0, void 0, function () {
@@ -1310,6 +1450,8 @@
 
     exports.default = createMysqlDriver;
     exports.pg = pg;
+    exports.MysqlQueryTransformer = MysqlQueryTransformer;
+    exports.PostgresQueryTransformer = PostgresQueryTransformer;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

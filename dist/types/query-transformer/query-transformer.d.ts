@@ -1,3 +1,4 @@
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 export interface QueryTransformationResult {
     queryString: string;
     parameters: any[];
@@ -7,6 +8,8 @@ export declare abstract class QueryTransformer {
         queryString: string;
         parameters: any[] | undefined;
     };
+    abstract preparePersistentValue(value: any, metadata: ColumnMetadata): any;
+    abstract prepareHydratedValue(value: any, metadata: ColumnMetadata): any;
     protected abstract transformQuery(query: string, srcParameters: any[]): string;
     protected abstract transformParameters(srcParameters?: any[]): any[] | undefined;
 }

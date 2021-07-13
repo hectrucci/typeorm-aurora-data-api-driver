@@ -36,10 +36,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pg = void 0;
+exports.PostgresQueryTransformer = exports.MysqlQueryTransformer = exports.pg = void 0;
 // @ts-ignore
 var data_api_client_1 = require("data-api-client");
 var query_transformer_1 = require("./query-transformer");
+Object.defineProperty(exports, "MysqlQueryTransformer", { enumerable: true, get: function () { return query_transformer_1.MysqlQueryTransformer; } });
+Object.defineProperty(exports, "PostgresQueryTransformer", { enumerable: true, get: function () { return query_transformer_1.PostgresQueryTransformer; } });
 var DataApiDriver = /** @class */ (function () {
     function DataApiDriver(region, secretArn, resourceArn, database, loggerFn, queryTransformer, serviceConfigOptions, formatOptions) {
         if (loggerFn === void 0) { loggerFn = function () { return undefined; }; }
@@ -87,6 +89,12 @@ var DataApiDriver = /** @class */ (function () {
                 }
             });
         });
+    };
+    DataApiDriver.prototype.preparePersistentValue = function (value, columnMetadata) {
+        return this.queryTransformer.preparePersistentValue(value, columnMetadata);
+    };
+    DataApiDriver.prototype.prepareHydratedValue = function (value, columnMetadata) {
+        return this.queryTransformer.prepareHydratedValue(value, columnMetadata);
     };
     DataApiDriver.prototype.startTransaction = function () {
         return __awaiter(this, void 0, void 0, function () {
