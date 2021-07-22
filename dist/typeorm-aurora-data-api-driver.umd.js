@@ -1364,7 +1364,7 @@
                 secretArn: secretArn,
                 resourceArn: resourceArn,
                 database: database,
-                engine: serviceConfigOptions.engine,
+                engine: this.serviceConfigOptions.engine,
                 options: this.serviceConfigOptions,
                 formatOptions: formatOptions,
             });
